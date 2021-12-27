@@ -2,7 +2,7 @@
 
 /*** VERSION WITH LOCAL API ***/
 
-const API_URL = '../api/users.json';
+const API_URL = './api/users.json';
 
 let users = [];
 let favorites = [];
