@@ -1,62 +1,72 @@
 'use strict';
 
-const API_URL = 'https://beta.adalab.es/ejercicios-extra/js-fetch-arrays-princesas-disney/data/users.json';
+/*** VERSION WITH LOCAL API ***/
+
+const API_URL = '../api/users.json';
 
 let users = [];
+let favorites = [];
 
 /* Do your magic! 🦄🦄🦄 */
 
 
-// check/uncheck favorite
-function checkFav(user) {
-  if (users[user.id].fav) {
-    users[user.id].fav = false;
-    user.classList.remove('fav');
+// update favorite
+function updateFavorite(user) {
+  let favIndex = favorites.findIndex(fav => fav.id === user.dataset.id);
+  if (favIndex === -1) {
+    const length = favorites.push({ id: user.dataset.id, fav: true });
+    favIndex = length - 1;
   } else {
-    users[user.id].fav = true;
-    user.classList.add('fav');
+    favorites[favIndex].fav = !favorites[favIndex].fav;
   }
 
-  // save data in local storage
-  localStorage.setItem('users', JSON.stringify(users));
+  // set fav css style
+  if (favorites[favIndex].fav) {
+    user.classList.add('fav');
+  } else {
+    user.classList.remove('fav');
+  }
+
+  // save favorites in local storage
+  localStorage.setItem('favorites', JSON.stringify(favorites));
 }
 
 
 // handle click event
 function handleClickItem(event) {
-  checkFav(event.currentTarget);
+  updateFavorite(event.currentTarget);
 }
 
 
 // render list of users
-function renderList(usersData) {
-  for (const userData of usersData) {
+function renderList() {
+  for (const user of users) {
 
     // image element <img>
     const newImage = document.createElement('img');
     newImage.className = 'list__image';
-    newImage.src = userData.picture;
-    newImage.alt = userData.name;
+    newImage.src = user.picture;
+    newImage.alt = user.name;
 
     // name element <h2>
     const newName = document.createElement('h2');
     newName.className = 'list__name';
-    newName.textContent = userData.name;
+    newName.textContent = user.name;
 
     // email element <p>
     const newEmail = document.createElement('p');
     newEmail.className = 'list__email';
-    newEmail.textContent = `E-mail: ${userData.email}`;
+    newEmail.textContent = `E-mail: ${user.email}`;
 
     // phone element <p>
     const newPhone = document.createElement('p');
     newPhone.className = 'list__phone';
-    newPhone.textContent = `Teléfono: ${userData.phone}`;
+    newPhone.textContent = `Teléfono: ${user.phone}`;
 
     // comment element <p>
     const newComment = document.createElement('p');
     newComment.className = 'list__comment';
-    newComment.textContent = userData.comment;
+    newComment.textContent = user.comment;
 
     // container element <div>
     const newContainer = document.createElement('div');
@@ -69,50 +79,42 @@ function renderList(usersData) {
 
     // item element <li>
     const newItem = document.createElement('li');
-    newItem.className = userData.fav ? 'list__item fav' : 'list__item';
-    newItem.id = userData.id;
+    newItem.dataset.id = user.id;
+
+    // set fav css style
+    const favIndex = favorites.findIndex(fav => fav.id === user.id);
+    newItem.className = favIndex !== -1 && favorites[favIndex].fav ? 'list__item fav' : 'list__item';
 
     // listen click event
     newItem.addEventListener('click', handleClickItem);
 
     newItem.appendChild(newImage);
     newItem.appendChild(newContainer);
-
     document.querySelector('.js-list').appendChild(newItem);
   }
 }
 
 
 // get users from api
-function getUsers(url) {
-
-  // fetch request
-  fetch(url)
+function getUsersFromApi() {
+  fetch(API_URL)
     .then(response => response.json())
     .then(data => {
       users = data;
-
-      for (let i = 0; i < users.length; i++) {
-        // add id and fav properties
-        users[i].id = i;
-        users[i].fav = false;
-        // fix image url
-        users[i].picture = users[i].picture.replace('ejercicio-fin-de-semana-promo-j', 'ejercicios-extra/js-fetch-arrays-princesas-disney');
-      }
-
-      // save data in local storage
-      localStorage.setItem('users', JSON.stringify(users));
-
-      renderList(users);
+      renderList();
     });
 }
 
 
-// query data in local storage
-users = JSON.parse(localStorage.getItem('users'));
-
-if (users) {
-  renderList(users);
-} else {
-  getUsers(API_URL);
+// get favorites from local storage
+function getFavoritesFromLocalStorage() {
+  const favoritesFromLocalStorage = JSON.parse(localStorage.getItem('favorites'));
+  if (favoritesFromLocalStorage) {
+    favorites = favoritesFromLocalStorage;
+  }
 }
+
+
+// start app
+getFavoritesFromLocalStorage();
+getUsersFromApi();
